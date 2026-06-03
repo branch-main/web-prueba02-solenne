@@ -4,19 +4,19 @@
 @theme {
   --font-sans: Manrope, sans-serif;
   --font-serif: Fraunces, serif;
-  --color-ink: #20201d;
-  --color-muted: #74706a;
-  --color-paper: #f5f4f1;
-  --color-cream: #fbfaf7;
-  --color-sand: #e7e2d8;
-  --color-terracotta: #9f5638;
-  --color-sage: #5d6b59;
-  --color-charcoal: #171715;
+  --color-ink: #111b2a;
+  --color-muted: #687482;
+  --color-paper: #eef3f7;
+  --color-cream: #fbfdff;
+  --color-sand: #dbe8ef;
+  --color-terracotta: #2f5f7f;
+  --color-sage: #3f6f68;
+  --color-charcoal: #111b2a;
 }
 
 body {
-  color: #20201d;
-  background: #f5f4f1;
+  color: #111b2a;
+  background: #eef3f7;
 }
 
 button, input, textarea, select {

@@ -10,9 +10,9 @@ export default async function HomePage() {
     <>
       <section className="py-6 lg:py-8">
         <div className="relative min-h-[560px] overflow-hidden rounded-lg shadow-[0_18px_48px_rgba(28,28,24,0.12)]">
-          <Image className="object-cover" src="https://images.unsplash.com/photo-1616046229478-9901c5536a45?q=80&w=1800&auto=format&fit=crop" alt="Interior cálido de Solenne" fill priority sizes="100vw" />
-          <div className="absolute inset-0 bg-black/45" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/34 to-black/10" />
+          <Image className="object-cover saturate-[0.88]" src="https://images.unsplash.com/photo-1616046229478-9901c5536a45?q=80&w=1800&auto=format&fit=crop" alt="Interior sereno de Solenne" fill priority sizes="100vw" />
+          <div className="absolute inset-0 bg-charcoal/52" />
+          <div className="absolute inset-0 bg-gradient-to-r from-charcoal/78 via-terracotta/28 to-charcoal/10" />
 
           <div className="relative flex min-h-[560px] flex-col justify-between p-6 text-white md:p-10 lg:p-12">
             <div className="max-w-2xl">

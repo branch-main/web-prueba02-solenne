@@ -31,7 +31,7 @@ export function ProductGallery({ imageUrl, productName }: ProductGalleryProps) {
         ))}
       </div>
 
-      <div className="relative h-[430px] overflow-hidden rounded-md bg-[#ecebea] md:h-[500px] xl:h-[560px]">
+      <div className="relative h-[430px] overflow-hidden rounded-md bg-sand md:h-[500px] xl:h-[560px]">
         <Image key={activeIndex} className="object-cover animate-[galleryFade_260ms_ease-out]" src={imageUrl} alt={productName} fill priority sizes="(min-width: 1280px) 58vw, (min-width: 768px) calc(100vw - 430px), 100vw" />
         <div className="absolute inset-x-4 top-1/2 flex -translate-y-1/2 items-center justify-between">
           <button className="grid size-11 place-items-center rounded-full bg-white/85 text-ink transition hover:bg-white" type="button" onClick={previousImage} aria-label="Imagen anterior">
