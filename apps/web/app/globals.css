@@ -1,0 +1,36 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: Manrope, sans-serif;
+  --font-serif: Fraunces, serif;
+  --color-ink: #20201d;
+  --color-muted: #74706a;
+  --color-paper: #f5f4f1;
+  --color-cream: #fbfaf7;
+  --color-sand: #e7e2d8;
+  --color-terracotta: #9f5638;
+  --color-sage: #5d6b59;
+  --color-charcoal: #171715;
+}
+
+body {
+  color: #20201d;
+  background: #f5f4f1;
+}
+
+button, input, textarea, select {
+  font-family: inherit;
+}
+
+@keyframes galleryFade {
+  from {
+    opacity: 0;
+    transform: scale(1.01);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
