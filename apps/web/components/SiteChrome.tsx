@@ -22,9 +22,10 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
             <Link className="shrink-0 font-serif text-3xl font-bold tracking-[-0.045em]" href="/">Solenne</Link>
             <nav className="hidden items-center gap-6 text-sm font-extrabold text-muted md:flex">
               <Link className="transition hover:text-ink" href="/#catalogo">Catálogo</Link>
-              <Link className="transition hover:text-ink" href="/#catalogo">Hogar</Link>
-              <Link className="transition hover:text-ink" href="/#catalogo">Cocina</Link>
-              <Link className="transition hover:text-ink" href="/#catalogo">Tecnología</Link>
+              <Link className="transition hover:text-ink" href="/?category=Hogar#catalogo">Hogar</Link>
+              <Link className="transition hover:text-ink" href="/?category=Cocina#catalogo">Cocina</Link>
+              <Link className="transition hover:text-ink" href="/?category=Tecnología#catalogo">Tecnología</Link>
+              <Link className="transition hover:text-ink" href="/?category=Bolsos#catalogo">Bolsos</Link>
             </nav>
           </div>
 

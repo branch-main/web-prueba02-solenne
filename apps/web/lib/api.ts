@@ -17,6 +17,15 @@ export type ProductInput = {
   imageUrl?: string;
 };
 
+export type ProductCategory = "Todos" | "Hogar" | "Cocina" | "Tecnología" | "Bolsos";
+export type ProductSort = "featured" | "price-asc" | "price-desc" | "stock";
+
+export type ProductListParams = {
+  search?: string;
+  category?: ProductCategory;
+  sort?: ProductSort;
+};
+
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 const parseResponse = async <T>(response: Response): Promise<T> => {
@@ -33,9 +42,15 @@ const parseResponse = async <T>(response: Response): Promise<T> => {
 };
 
 export const api = {
-  async listProducts(search?: string) {
-    const params = search ? `?search=${encodeURIComponent(search)}` : "";
-    const data = await parseResponse<{ products: Product[] }>(await fetch(`${apiUrl}/api/products${params}`, { cache: "no-store" }));
+  async listProducts(params: ProductListParams = {}) {
+    const query = new URLSearchParams();
+
+    if (params.search) query.set("search", params.search);
+    if (params.category && params.category !== "Todos") query.set("category", params.category);
+    if (params.sort && params.sort !== "featured") query.set("sort", params.sort);
+
+    const path = query.size > 0 ? `/api/products?${query.toString()}` : "/api/products";
+    const data = await parseResponse<{ products: Product[] }>(await fetch(`${apiUrl}${path}`, { cache: "no-store" }));
     return data.products;
   },
 

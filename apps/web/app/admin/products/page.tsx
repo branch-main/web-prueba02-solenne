@@ -1,65 +1,52 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Boxes, Edit3, Package, Plus, Search, Trash2 } from "lucide-react";
+import { AlertTriangle, Boxes, Edit3, Package, Plus, Search } from "lucide-react";
+import { AdminDeleteProductButton } from "@/components/AdminProductActions";
 import { AdminGuard } from "@/components/AdminGuard";
 import { money } from "@/components/ProductCard";
-import { api, type Product } from "@/lib/api";
-import { getToken } from "@/lib/auth";
+import { api, type ProductCategory, type ProductListParams, type ProductSort } from "@/lib/api";
 
-export default function AdminProductsPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [search, setSearch] = useState("");
-  const [error, setError] = useState("");
+const categories: ProductCategory[] = ["Todos", "Hogar", "Cocina", "Tecnología", "Bolsos"];
+const sorts: { value: ProductSort; label: string }[] = [
+  { value: "featured", label: "Destacados" },
+  { value: "price-asc", label: "Precio: menor a mayor" },
+  { value: "price-desc", label: "Precio: mayor a menor" },
+  { value: "stock", label: "Más stock" }
+];
 
-  const metrics = useMemo(() => ({
-    total: products.length,
-    units: products.reduce((sum, product) => sum + product.stock, 0),
-    lowStock: products.filter((product) => product.stock <= 5).length
-  }), [products]);
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
-  const filteredProducts = useMemo(() => {
-    const term = search.trim().toLowerCase();
+const firstParam = (value: string | string[] | undefined) => Array.isArray(value) ? value[0] : value;
 
-    if (!term) return products;
+const productListParams = async (searchParams: SearchParams): Promise<Required<ProductListParams>> => {
+  const params = await searchParams;
+  const category = firstParam(params.category);
+  const sort = firstParam(params.sort);
 
-    return products.filter((product) => `${product.name} ${product.description}`.toLowerCase().includes(term));
-  }, [products, search]);
-
-  const loadProducts = async () => {
-    const nextProducts = await api.listProducts();
-    setProducts(nextProducts);
+  return {
+    search: firstParam(params.search)?.trim() || "",
+    category: category && categories.includes(category as ProductCategory) ? category as ProductCategory : "Todos",
+    sort: sort && sorts.some((option) => option.value === sort) ? sort as ProductSort : "featured"
   };
+};
 
-  useEffect(() => {
-    let active = true;
+const productsPath = ({ search, category, sort }: ProductListParams) => {
+  const params = new URLSearchParams();
 
-    api.listProducts()
-      .then((nextProducts) => {
-        if (active) setProducts(nextProducts);
-      })
-      .catch((requestError) => {
-        if (active) setError(requestError instanceof Error ? requestError.message : "No se pudieron cargar los productos");
-      });
+  if (search) params.set("search", search);
+  if (category && category !== "Todos") params.set("category", category);
+  if (sort && sort !== "featured") params.set("sort", sort);
 
-    return () => {
-      active = false;
-    };
-  }, []);
+  return params.size > 0 ? `/admin/products?${params.toString()}` : "/admin/products";
+};
 
-  const remove = async (product: Product) => {
-    if (!confirm(`¿Eliminar ${product.name}?`)) return;
-    const token = getToken();
-    if (!token) return;
-
-    try {
-      await api.deleteProduct(product.id, token);
-      await loadProducts();
-    } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "No se pudo eliminar");
-    }
+export default async function AdminProductsPage({ searchParams }: { searchParams: SearchParams }) {
+  const params = await productListParams(searchParams);
+  const [products, allProducts] = await Promise.all([api.listProducts(params), api.listProducts()]);
+  const metrics = {
+    total: allProducts.length,
+    units: allProducts.reduce((sum, product) => sum + product.stock, 0),
+    lowStock: allProducts.filter((product) => product.stock <= 5).length
   };
 
   return (
@@ -92,23 +79,36 @@ export default function AdminProductsPage() {
           </div>
         </div>
 
-        {error && <div className="rounded-lg bg-red-100 p-3 font-black text-red-800">{error}</div>}
-
         <div className="rounded-xl bg-white/80">
-          <div className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="grid gap-3 px-4 py-3 lg:grid-cols-[1fr_auto] lg:items-end lg:justify-between">
             <div>
               <h2 className="text-sm font-black">Listado de productos</h2>
-              <p className="text-xs font-bold text-muted">{filteredProducts.length} de {products.length} productos</p>
+              <p className="text-xs font-bold text-muted">{products.length} de {allProducts.length} productos</p>
             </div>
-            <label className="relative sm:w-64">
-              <span className="sr-only">Buscar en productos</span>
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" strokeWidth={2.2} />
-              <input className="h-9 w-full rounded-lg border border-ink/15 bg-white pl-9 pr-3 text-xs font-bold outline-none transition placeholder:text-muted/70 focus:border-charcoal focus:ring-4 focus:ring-ink/10" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar producto" />
-            </label>
+            <form className="grid gap-2 sm:grid-cols-[260px_155px_auto]" action="/admin/products">
+              {params.category !== "Todos" && <input type="hidden" name="category" value={params.category} />}
+              <label className="relative">
+                <span className="sr-only">Buscar en productos</span>
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" strokeWidth={2.2} />
+                <input name="search" className="h-9 w-full rounded-lg border border-ink/15 bg-white pl-9 pr-3 text-xs font-bold outline-none transition placeholder:text-muted/70 focus:border-charcoal focus:ring-4 focus:ring-ink/10" defaultValue={params.search} placeholder="Buscar producto" />
+              </label>
+              <select name="sort" className="h-9 rounded-lg border border-ink/15 bg-white px-3 text-xs font-black outline-none transition focus:border-charcoal focus:ring-4 focus:ring-ink/10" defaultValue={params.sort}>
+                {sorts.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+              </select>
+              <button className="rounded-lg bg-charcoal px-3 py-2 text-xs font-black text-cream transition hover:bg-terracotta">Filtrar</button>
+            </form>
+          </div>
+
+          <div className="flex flex-wrap gap-1.5 border-t border-ink/10 px-4 py-3">
+            {categories.map((item) => (
+              <Link key={item} className={params.category === item ? "rounded-md bg-charcoal px-2.5 py-1.5 text-xs font-black text-cream" : "rounded-md border border-ink/15 bg-white/50 px-2.5 py-1.5 text-xs font-black text-muted transition hover:border-ink/30 hover:bg-white hover:text-ink"} href={productsPath({ search: params.search, category: item, sort: params.sort })}>
+                {item}
+              </Link>
+            ))}
           </div>
 
           <div className="overflow-x-auto">
-          {products.length === 0 ? <div className="p-12 text-center text-muted">Todavía no hay productos.</div> : filteredProducts.length === 0 ? <div className="p-12 text-center text-muted">No hay productos para esta búsqueda.</div> : (
+          {allProducts.length === 0 ? <div className="p-12 text-center text-muted">Todavía no hay productos.</div> : products.length === 0 ? <div className="p-12 text-center text-muted">No hay productos para estos filtros.</div> : (
             <table className="w-full min-w-[820px] border-collapse">
               <thead className="bg-paper/70">
                 <tr className="text-left text-[11px] uppercase tracking-[0.18em] text-muted">
@@ -120,7 +120,7 @@ export default function AdminProductsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredProducts.map((product) => (
+                {products.map((product) => (
                   <tr key={product.id} className="transition hover:bg-paper/45">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
@@ -136,9 +136,7 @@ export default function AdminProductsPage() {
                         <Link className="grid size-9 place-items-center rounded-md border border-ink/15 bg-white text-ink transition hover:border-ink/30 hover:bg-paper" href={`/admin/products/${product.id}/edit`} aria-label={`Editar ${product.name}`}>
                           <Edit3 className="size-4" strokeWidth={2.2} />
                         </Link>
-                        <button className="grid size-9 place-items-center rounded-md bg-red-800 text-white transition hover:bg-red-900" onClick={() => remove(product)} aria-label={`Eliminar ${product.name}`}>
-                          <Trash2 className="size-4" strokeWidth={2.2} />
-                        </button>
+                        <AdminDeleteProductButton product={product} />
                       </div>
                     </td>
                   </tr>

@@ -1,10 +1,84 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 import { ProductSearch } from "@/components/ProductSearch";
-import { api } from "@/lib/api";
+import { api, type ProductCategory, type ProductListParams, type ProductSort } from "@/lib/api";
 
-export default async function HomePage() {
-  const products = await api.listProducts();
+const categories: ProductCategory[] = ["Todos", "Hogar", "Cocina", "Tecnología", "Bolsos"];
+const sorts: ProductSort[] = ["featured", "price-asc", "price-desc", "stock"];
+
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+const firstParam = (value: string | string[] | undefined) => Array.isArray(value) ? value[0] : value;
+
+const productListParams = async (searchParams: SearchParams): Promise<Required<ProductListParams>> => {
+  const params = await searchParams;
+  const category = firstParam(params.category);
+  const sort = firstParam(params.sort);
+
+  return {
+    search: firstParam(params.search)?.trim() || "",
+    category: category && categories.includes(category as ProductCategory) ? category as ProductCategory : "Todos",
+    sort: sort && sorts.includes(sort as ProductSort) ? sort as ProductSort : "featured"
+  };
+};
+
+function ProductCardSkeleton() {
+  return (
+    <div className="overflow-hidden rounded-lg bg-white">
+      <div className="h-48 animate-pulse bg-sand xl:h-44" />
+      <div className="grid gap-3 p-3">
+        <div className="flex items-start justify-between gap-4">
+          <div className="h-5 w-3/5 animate-pulse rounded bg-sand" />
+          <div className="h-5 w-16 animate-pulse rounded bg-sand" />
+        </div>
+        <div className="space-y-2">
+          <div className="h-4 w-full animate-pulse rounded bg-sand" />
+          <div className="h-4 w-4/5 animate-pulse rounded bg-sand" />
+        </div>
+        <div className="flex items-center justify-between gap-4 pt-1">
+          <div className="h-4 w-20 animate-pulse rounded bg-sand" />
+          <div className="h-4 w-24 animate-pulse rounded bg-sand" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProductGridSkeleton() {
+  return (
+    <section className="py-8">
+      <div className="mb-6 flex flex-col gap-5 pb-2">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <div className="h-3 w-20 animate-pulse rounded bg-sand" />
+            <div className="mt-3 h-12 w-72 animate-pulse rounded bg-sand" />
+            <div className="mt-3 h-4 w-40 animate-pulse rounded bg-sand" />
+          </div>
+          <div className="grid gap-2 sm:grid-cols-[320px_155px]">
+            <div className="h-9 animate-pulse rounded-md bg-sand" />
+            <div className="h-9 animate-pulse rounded-md bg-sand" />
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {[0, 1, 2, 3, 4].map((item) => <div key={item} className="h-8 w-20 animate-pulse rounded-md bg-sand" />)}
+        </div>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {[0, 1, 2, 3, 4, 5, 6, 7].map((item) => <ProductCardSkeleton key={item} />)}
+      </div>
+    </section>
+  );
+}
+
+async function Catalog({ params }: { params: Required<ProductListParams> }) {
+  const products = await api.listProducts(params);
+
+  return products.length === 0 && !params.search && params.category === "Todos" ? <div className="py-8 text-center text-muted">La tienda está vacía. Añade productos desde administración.</div> : <ProductSearch products={products} params={params} />;
+}
+
+export default async function HomePage({ searchParams }: { searchParams: SearchParams }) {
+  const params = await productListParams(searchParams);
 
   return (
     <>
@@ -32,7 +106,9 @@ export default async function HomePage() {
       </section>
 
       <div id="catalogo">
-        {products.length === 0 ? <div className="py-8 text-center text-muted">La tienda está vacía. Añade productos desde administración.</div> : <ProductSearch products={products} />}
+        <Suspense key={`${params.search}:${params.category}:${params.sort}`} fallback={<ProductGridSkeleton />}>
+          <Catalog params={params} />
+        </Suspense>
       </div>
     </>
   );

@@ -1,10 +1,12 @@
 import type { Request, Response } from "express";
 import { createProduct, deleteProduct, getProduct, listProducts, updateProduct } from "./products.service";
+import { listProductsQuerySchema } from "./products.schemas";
 
 const parseId = (value: string | string[] | undefined) => Number.parseInt(Array.isArray(value) ? value[0] : value || "", 10);
 
 export const listProductsController = async (req: Request, res: Response) => {
-  const products = await listProducts(typeof req.query.search === "string" ? req.query.search : undefined);
+  const query = listProductsQuerySchema.parse(req.query);
+  const products = await listProducts(query);
   res.json({ products });
 };
 
